@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Questionnaire | MoveMatch</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html">MoveMatch</a>
+      <nav>
+        <a href="questionnaire.html" aria-current="page">Questionnaire</a>
+        <a href="resources.html">Housing Resources</a>
+        <a href="checklist.html">Moving Checklist</a>
+      </nav>
+    </header>
+
+    <main class="form-page">
+      <section class="hero panel">
+        <div class="hero-split">
+          <div>
+            <p class="eyebrow">Your move, made simple</p>
+            <h1>Answer a few quick questions and get matched instantly</h1>
+            <p class="subhead">We turn your salary, lifestyle, and commute preferences into neighborhood matches and direct home listings.</p>
+          </div>
+          <figure class="hero-photo">
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" alt="Happy friends in a cozy new home" />
+          </figure>
+        </div>
+      </section>
+      <section class="panel wizard-shell" id="relocation-wizard">
+        <p class="instant-pill">Instant personalized results right after your last answer.</p>
+        <h2>Find your best neighborhood match</h2>
+        <p class="muted" id="wizard-progress"></p>
+        <div id="wizard-question"></div>
+        <p id="wizard-error" class="wizard-error" aria-live="polite"></p>
+        <div class="wizard-actions">
+          <button class="bubble-btn bubble-ghost" id="wizard-back" type="button">Back</button>
+          <button class="bubble-btn" id="wizard-next" type="button">Next</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
