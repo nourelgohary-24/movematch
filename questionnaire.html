@@ -17,138 +17,28 @@
     </header>
 
     <main class="form-page">
-      <section class="panel">
-        <h1>Find your best neighborhood match</h1>
-        <p>Answer this in under 3 minutes.</p>
-        <form id="relocation-form">
-          <label>Job city
-            <select name="city" required>
-              <option value="">Select one</option>
-              <optgroup label="Washington">
-                <option>Seattle</option>
-                <option>Bellevue</option>
-                <option>Redmond</option>
-                <option>Tacoma</option>
-                <option>Spokane</option>
-                <option>Everett</option>
-                <option>Olympia</option>
-                <option>Vancouver (WA)</option>
-              </optgroup>
-              <optgroup label="Other Major Cities">
-                <option>Austin</option>
-                <option>New York</option>
-                <option>Chicago</option>
-                <option>San Francisco</option>
-                <option>Los Angeles</option>
-              </optgroup>
-            </select>
-          </label>
-
-          <label>Annual salary (USD)
-            <input name="salary" type="number" min="25000" step="1000" required />
-          </label>
-
-          <label>Work mode
-            <select name="workMode" required>
-              <option value="">Select one</option>
-              <option>In-person</option>
-              <option>Hybrid</option>
-              <option>Remote</option>
-            </select>
-          </label>
-
-          <label>Company name (optional)
-            <input name="companyName" type="text" placeholder="Example: Amazon" />
-          </label>
-
-          <label>Work address (or office area)
-            <input
-              name="workAddress"
-              type="text"
-              placeholder="Example: 410 Terry Ave N, Seattle, WA"
-              required
-            />
-          </label>
-
-          <label>Do you have a car?
-            <select name="car" required>
-              <option value="">Select one</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </label>
-
-          <label>Preferred home type
-            <select name="homeType" id="home-type-select" required>
-              <option value="">Select one</option>
-              <option>Apartment</option>
-              <option>House</option>
-            </select>
-          </label>
-
-          <div id="house-finance-section" hidden>
-            <label>If you choose a house, do you want to plan a down payment?
-              <select name="wantsDownPayment" id="wants-down-payment">
-                <option value="">Select one</option>
-                <option>Yes</option>
-                <option>No</option>
-              </select>
-            </label>
-
-            <label id="down-payment-amount-wrap" hidden>Planned down payment amount (USD)
-              <input name="downPaymentAmount" id="down-payment-amount" type="number" min="0" step="1000" />
-            </label>
+      <section class="hero panel">
+        <div class="hero-split">
+          <div>
+            <p class="eyebrow">Your move, made simple</p>
+            <h1>Answer a few quick questions and get matched instantly</h1>
+            <p class="subhead">We turn your salary, lifestyle, and commute preferences into neighborhood matches and direct home listings.</p>
           </div>
-
-          <label>Maximum rent you're willing to pay
-            <input name="maxRent" type="number" min="800" step="50" required />
-          </label>
-
-          <label>Roommates?
-            <select name="roommates" required>
-              <option value="">Select one</option>
-              <option>Yes</option>
-              <option>No</option>
-              <option>Maybe</option>
-            </select>
-          </label>
-
-          <label>Main preference
-            <select name="lifestyle" required>
-              <option value="">Select one</option>
-              <option>Nightlife</option>
-              <option>Quiet</option>
-              <option>Affordability</option>
-              <option>Walkability</option>
-            </select>
-          </label>
-
-          <label>Ideal max commute (minutes)
-            <input name="commute" type="number" min="5" max="90" step="5" required />
-          </label>
-
-          <label>Pets?
-            <select name="pets" required>
-              <option value="">Select one</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </label>
-
-          <label>Moving alone?
-            <select name="alone" required>
-              <option value="">Select one</option>
-              <option>Yes</option>
-              <option>No</option>
-            </select>
-          </label>
-
-          <label>Move-by date
-            <input name="moveDate" type="date" required />
-          </label>
-
-          <button class="btn" type="submit">Get My Recommendations</button>
-        </form>
+          <figure class="hero-photo">
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" alt="Happy friends in a cozy new home" />
+          </figure>
+        </div>
+      </section>
+      <section class="panel wizard-shell" id="relocation-wizard">
+        <p class="instant-pill">Instant personalized results right after your last answer.</p>
+        <h2>Find your best neighborhood match</h2>
+        <p class="muted" id="wizard-progress"></p>
+        <div id="wizard-question"></div>
+        <p id="wizard-error" class="wizard-error" aria-live="polite"></p>
+        <div class="wizard-actions">
+          <button class="bubble-btn bubble-ghost" id="wizard-back" type="button">Back</button>
+          <button class="bubble-btn" id="wizard-next" type="button">Next</button>
+        </div>
       </section>
     </main>
 

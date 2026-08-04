@@ -131,43 +131,242 @@ const cityData = {
   }
 };
 
-const form = document.getElementById("relocation-form");
-if (form) {
-  const homeTypeSelect = document.getElementById("home-type-select");
-  const houseFinanceSection = document.getElementById("house-finance-section");
-  const wantsDownPayment = document.getElementById("wants-down-payment");
-  const downPaymentAmountWrap = document.getElementById("down-payment-amount-wrap");
-  const downPaymentAmountInput = document.getElementById("down-payment-amount");
+const stateRentBaselines = {
+  Alabama: [950, 1550], Alaska: [1150, 1850], Arizona: [1300, 2100], Arkansas: [900, 1450],
+  California: [2100, 3400], Colorado: [1500, 2500], Connecticut: [1500, 2400], Delaware: [1300, 2050],
+  Florida: [1500, 2450], Georgia: [1250, 2100], Hawaii: [2100, 3300], Idaho: [1200, 1900],
+  Illinois: [1300, 2200], Indiana: [1000, 1650], Iowa: [950, 1550], Kansas: [950, 1600],
+  Kentucky: [1000, 1650], Louisiana: [1050, 1750], Maine: [1250, 2000], Maryland: [1600, 2600],
+  Massachusetts: [1900, 3100], Michigan: [1050, 1750], Minnesota: [1200, 2000], Mississippi: [900, 1450],
+  Missouri: [1000, 1700], Montana: [1200, 1950], Nebraska: [1000, 1650], Nevada: [1350, 2200],
+  "New Hampshire": [1400, 2250], "New Jersey": [1800, 2950], "New Mexico": [1050, 1700],
+  "New York": [1900, 3200], "North Carolina": [1250, 2050], "North Dakota": [950, 1550],
+  Ohio: [1000, 1700], Oklahoma: [950, 1550], Oregon: [1500, 2450], Pennsylvania: [1200, 2000],
+  "Rhode Island": [1500, 2350], "South Carolina": [1200, 1950], "South Dakota": [950, 1550],
+  Tennessee: [1200, 2000], Texas: [1250, 2100], Utah: [1350, 2200], Vermont: [1300, 2100],
+  Virginia: [1500, 2450], Washington: [1600, 2650], "West Virginia": [850, 1400],
+  Wisconsin: [1050, 1750], Wyoming: [1000, 1650]
+};
 
-  function syncHouseFinanceUI() {
-    const isHouse = homeTypeSelect && homeTypeSelect.value === "House";
-    houseFinanceSection.hidden = !isHouse;
+const wizard = document.getElementById("relocation-wizard");
+if (wizard) {
+  const progress = document.getElementById("wizard-progress");
+  const questionRoot = document.getElementById("wizard-question");
+  const backBtn = document.getElementById("wizard-back");
+  const nextBtn = document.getElementById("wizard-next");
+  const answers = {};
+  let step = 0;
 
-    if (!isHouse) {
-      wantsDownPayment.value = "";
-      downPaymentAmountWrap.hidden = true;
-      downPaymentAmountInput.value = "";
-      downPaymentAmountInput.required = false;
-      return;
+  const stateCities = {
+    Alabama: ["Birmingham", "Montgomery", "Mobile", "Huntsville", "Tuscaloosa"],
+    Alaska: ["Anchorage", "Fairbanks", "Juneau", "Sitka", "Ketchikan"],
+    Arizona: ["Phoenix", "Tucson", "Mesa", "Scottsdale", "Tempe", "Chandler"],
+    Arkansas: ["Little Rock", "Fayetteville", "Fort Smith", "Springdale", "Jonesboro"],
+    California: ["Los Angeles", "San Francisco", "San Diego", "San Jose", "Sacramento", "Fresno", "Oakland"],
+    Colorado: ["Denver", "Colorado Springs", "Aurora", "Fort Collins", "Boulder"],
+    Connecticut: ["Bridgeport", "New Haven", "Stamford", "Hartford", "Waterbury"],
+    Delaware: ["Wilmington", "Dover", "Newark", "Middletown", "Smyrna"],
+    Florida: ["Miami", "Orlando", "Tampa", "Jacksonville", "Fort Lauderdale", "St. Petersburg"],
+    Georgia: ["Atlanta", "Augusta", "Savannah", "Athens", "Macon"],
+    Hawaii: ["Honolulu", "Hilo", "Kailua", "Kaneohe", "Waipahu"],
+    Idaho: ["Boise", "Meridian", "Nampa", "Idaho Falls", "Pocatello"],
+    Illinois: ["Chicago", "Aurora", "Naperville", "Rockford", "Joliet"],
+    Indiana: ["Indianapolis", "Fort Wayne", "Evansville", "South Bend", "Carmel"],
+    Iowa: ["Des Moines", "Cedar Rapids", "Davenport", "Iowa City", "Sioux City"],
+    Kansas: ["Wichita", "Overland Park", "Kansas City", "Topeka", "Olathe"],
+    Kentucky: ["Louisville", "Lexington", "Bowling Green", "Owensboro", "Covington"],
+    Louisiana: ["New Orleans", "Baton Rouge", "Shreveport", "Lafayette", "Lake Charles"],
+    Maine: ["Portland", "Lewiston", "Bangor", "South Portland", "Auburn"],
+    Maryland: ["Baltimore", "Columbia", "Germantown", "Silver Spring", "Frederick"],
+    Massachusetts: ["Boston", "Worcester", "Springfield", "Cambridge", "Lowell"],
+    Michigan: ["Detroit", "Grand Rapids", "Ann Arbor", "Lansing", "Flint"],
+    Minnesota: ["Minneapolis", "Saint Paul", "Rochester", "Duluth", "Bloomington"],
+    Mississippi: ["Jackson", "Gulfport", "Southaven", "Biloxi", "Hattiesburg"],
+    Missouri: ["Kansas City", "Saint Louis", "Springfield", "Columbia", "Independence"],
+    Montana: ["Billings", "Missoula", "Bozeman", "Great Falls", "Helena"],
+    Nebraska: ["Omaha", "Lincoln", "Bellevue", "Grand Island", "Kearney"],
+    Nevada: ["Las Vegas", "Henderson", "Reno", "North Las Vegas", "Sparks"],
+    "New Hampshire": ["Manchester", "Nashua", "Concord", "Dover", "Rochester"],
+    "New Jersey": ["Newark", "Jersey City", "Paterson", "Elizabeth", "Edison"],
+    "New Mexico": ["Albuquerque", "Las Cruces", "Santa Fe", "Rio Rancho", "Roswell"],
+    "New York": ["New York", "Buffalo", "Rochester", "Albany", "Syracuse", "Yonkers"],
+    "North Carolina": ["Charlotte", "Raleigh", "Durham", "Greensboro", "Winston-Salem"],
+    "North Dakota": ["Fargo", "Bismarck", "Grand Forks", "Minot", "West Fargo"],
+    Ohio: ["Columbus", "Cleveland", "Cincinnati", "Toledo", "Akron"],
+    Oklahoma: ["Oklahoma City", "Tulsa", "Norman", "Broken Arrow", "Edmond"],
+    Oregon: ["Portland", "Eugene", "Salem", "Hillsboro", "Bend"],
+    Pennsylvania: ["Philadelphia", "Pittsburgh", "Allentown", "Harrisburg", "Erie"],
+    "Rhode Island": ["Providence", "Warwick", "Cranston", "Pawtucket", "East Providence"],
+    "South Carolina": ["Charleston", "Columbia", "Greenville", "Myrtle Beach", "Spartanburg"],
+    "South Dakota": ["Sioux Falls", "Rapid City", "Aberdeen", "Brookings", "Watertown"],
+    Tennessee: ["Nashville", "Memphis", "Knoxville", "Chattanooga", "Clarksville"],
+    Texas: ["Houston", "Austin", "Dallas", "San Antonio", "Fort Worth", "El Paso"],
+    Utah: ["Salt Lake City", "West Valley City", "Provo", "Ogden", "Sandy"],
+    Vermont: ["Burlington", "South Burlington", "Rutland", "Montpelier", "Barre"],
+    Virginia: ["Virginia Beach", "Richmond", "Arlington", "Norfolk", "Alexandria"],
+    Washington: ["Seattle", "Bellevue", "Tacoma", "Spokane", "Everett", "Redmond", "Olympia"],
+    "West Virginia": ["Charleston", "Huntington", "Morgantown", "Wheeling", "Parkersburg"],
+    Wisconsin: ["Milwaukee", "Madison", "Green Bay", "Kenosha", "Racine"],
+    Wyoming: ["Cheyenne", "Casper", "Laramie", "Gillette", "Rock Springs"]
+  };
+  const stateOptions = Object.keys(stateCities);
+
+  const formatWithCommas = (rawValue) => {
+    const digitsOnly = String(rawValue || "").replace(/\D/g, "");
+    if (!digitsOnly) return "";
+    return Number(digitsOnly).toLocaleString();
+  };
+
+  function stepsList() {
+    const base = [
+      { key: "state", label: "What state is your job in?", type: "select", options: stateOptions },
+      { key: "city", label: "What city is your job in?", type: "select", options: stateCities[answers.state] || [], allowCustom: true, placeholder: "Type any city in the selected state..." },
+      { key: "salary", label: "What is your annual salary (USD)?", type: "text", placeholder: "ex: 72,000", comma: true },
+      { key: "workMode", label: "What is your work mode?", type: "select", options: ["In-person", "Hybrid", "Remote"] },
+      { key: "companyName", label: "What company are you joining? (optional)", type: "text", placeholder: "Amazon" },
+      { key: "workAddress", label: "What is your work address or office area?", type: "text", placeholder: "410 Terry Ave N, Seattle, WA" },
+      { key: "car", label: "Do you have a car?", type: "select", options: ["Yes", "No"] },
+      { key: "homeType", label: "Do you want an apartment or house?", type: "select", options: ["Apartment", "House"] },
+      { key: "roommates", label: "Do you want roommates?", type: "select", options: ["Yes", "No", "Maybe"] },
+      { key: "lifestyle", label: "What matters most?", type: "select", options: ["Nightlife", "Quiet", "Affordability", "Walkability"] },
+      { key: "commute", label: "Ideal max commute (minutes)?", type: "number", placeholder: "30" },
+      { key: "pets", label: "Do you have pets?", type: "select", options: ["Yes", "No"] },
+      { key: "alone", label: "Are you moving alone?", type: "select", options: ["Yes", "No"] },
+      { key: "moveDate", label: "When do you need to move?", type: "date" }
+    ];
+
+    const afterHomeType = base.findIndex((item) => item.key === "homeType") + 1;
+    if (answers.homeType === "Apartment") {
+      base.splice(afterHomeType, 0, { key: "maxRent", label: "What is your max monthly rent?", type: "text", placeholder: "1,900", comma: true });
     }
-
-    const wantsPlan = wantsDownPayment.value === "Yes";
-    downPaymentAmountWrap.hidden = !wantsPlan;
-    downPaymentAmountInput.required = wantsPlan;
-    if (!wantsPlan) downPaymentAmountInput.value = "";
+    if (answers.homeType === "House") {
+      base.splice(afterHomeType, 0, { key: "housePaymentType", label: "How would you pay for the house?", type: "select", options: ["Mortgage", "Cash"] });
+      if (answers.housePaymentType === "Mortgage") {
+        base.splice(afterHomeType + 1, 0, { key: "maxHousing", label: "Max monthly mortgage payment?", type: "text", placeholder: "3,200", comma: true });
+      }
+      if (answers.housePaymentType === "Cash") {
+        base.splice(afterHomeType + 1, 0, { key: "maxHomePrice", label: "What is your cash home purchase budget?", type: "text", placeholder: "450,000", comma: true });
+      }
+      const paymentDetailIndexes = ["housePaymentType", "maxHousing", "maxHomePrice"]
+        .map((key) => base.findIndex((item) => item.key === key))
+        .filter((index) => index >= 0);
+      const afterPaymentDetails = Math.max(...paymentDetailIndexes) + 1;
+      base.splice(afterPaymentDetails, 0, { key: "wantsDownPayment", label: "Do you want down payment planning?", type: "select", options: ["Yes", "No"] });
+      if (answers.wantsDownPayment === "Yes") {
+        base.splice(afterPaymentDetails + 1, 0, { key: "downPaymentAmount", label: "Planned down payment amount (USD)", type: "text", placeholder: "50,000", comma: true });
+      }
+    }
+    base.push({ key: "createAccount", label: "Create an account to save your plan?", type: "select", options: ["Yes", "No"] });
+    if (answers.createAccount === "Yes") {
+      base.push({ key: "accountEmail", label: "Email for your account", type: "text", placeholder: "you@email.com" });
+    }
+    return base;
   }
 
-  homeTypeSelect.addEventListener("change", syncHouseFinanceUI);
-  wantsDownPayment.addEventListener("change", syncHouseFinanceUI);
-  syncHouseFinanceUI();
+  function renderStep() {
+    const list = stepsList();
+    if (step < 0) step = 0;
+    if (step > list.length - 1) step = list.length - 1;
+    const q = list[step];
+    progress.textContent = `Question ${step + 1} of ${list.length}`;
+    backBtn.style.visibility = step === 0 ? "hidden" : "visible";
+    nextBtn.textContent = step === list.length - 1 ? "Get Instant Results" : "Next";
 
-  form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const formData = new FormData(form);
-    const answers = Object.fromEntries(formData.entries());
-    localStorage.setItem("moveMatchAnswers", JSON.stringify(answers));
-    window.location.href = "results.html";
+    let field = "";
+    if (q.type === "select") {
+      const listId = `wizard-list-${q.key}`;
+      field = `<input id="wizard-input" list="${listId}" value="${answers[q.key] || ""}" placeholder="${q.placeholder || "Start typing to search..."}" autocomplete="off" />
+      <datalist id="${listId}">${q.options.map((o) => `<option value="${o}"></option>`).join("")}</datalist>`;
+    } else {
+      const value = answers[q.key] || "";
+      field = `<input id="wizard-input" type="${q.type}" value="${value}" placeholder="${q.placeholder || ""}" />`;
+    }
+    questionRoot.innerHTML = `<label>${q.label}${field}</label>`;
+
+    const input = document.getElementById("wizard-input");
+    const errorNode = document.getElementById("wizard-error");
+    if (q.comma) {
+      input.addEventListener("input", () => {
+        input.value = formatWithCommas(input.value);
+      });
+    }
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        nextBtn.click();
+      }
+    });
+    if (errorNode) errorNode.textContent = "";
+  }
+
+  function saveCurrent() {
+    const list = stepsList();
+    const q = list[step];
+    const input = document.getElementById("wizard-input");
+    const errorNode = document.getElementById("wizard-error");
+    const showError = (msg) => {
+      if (!errorNode) return;
+      errorNode.textContent = msg;
+    };
+    if (errorNode) errorNode.textContent = "";
+    const value = input ? input.value.trim() : "";
+    if (!value && q.key !== "companyName") return false;
+    if (q.type === "select" && value && q.options && !q.allowCustom && !q.options.includes(value)) {
+      showError("Please choose a value from the list.");
+      return false;
+    }
+    if (["salary", "maxRent", "maxHousing", "maxHomePrice", "downPaymentAmount", "commute"].includes(q.key)) {
+      const numeric = toNum(value);
+      if (numeric < 0) {
+        showError("Please enter a positive number.");
+        return false;
+      }
+    }
+    if (q.key === "moveDate") {
+      const picked = new Date(value);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (picked < today) {
+        showError("Please try a different date.");
+        return false;
+      }
+    }
+    if (q.key === "state" && answers.state && answers.state !== value) {
+      delete answers.city;
+    }
+    answers[q.key] = value;
+    return true;
+  }
+
+  backBtn.addEventListener("click", () => {
+    saveCurrent();
+    step -= 1;
+    renderStep();
   });
+
+  nextBtn.addEventListener("click", () => {
+    if (!saveCurrent()) return;
+    const list = stepsList();
+    if (step >= list.length - 1) {
+      localStorage.setItem("moveMatchAnswers", JSON.stringify(answers));
+      if (answers.createAccount === "Yes" && answers.accountEmail) {
+        const existing = JSON.parse(localStorage.getItem("moveMatchAccounts") || "[]");
+        existing.push({ email: answers.accountEmail, savedAt: new Date().toISOString(), profile: answers });
+        localStorage.setItem("moveMatchAccounts", JSON.stringify(existing));
+        const emailBody = Object.entries(answers)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join("\n");
+        const mailto = `mailto:${encodeURIComponent(answers.accountEmail)}?subject=${encodeURIComponent("Your MoveMatch Plan")}&body=${encodeURIComponent(emailBody)}`;
+        window.open(mailto, "_blank");
+      }
+      window.location.href = "results.html";
+      return;
+    }
+    step += 1;
+    renderStep();
+  });
+
+  renderStep();
 }
 
 function toNum(v) {
@@ -183,14 +382,15 @@ function estimateHomePriceFromMonthlyBudget(monthlyBudget) {
   return annualBudget / 0.07;
 }
 
-function calculateRentRange(salary, cityBaseline, roommates) {
+function calculateRentRange(salary, cityBaseline, roommates, homeType) {
   const monthlyIncome = salary / 12;
   const targetLow = monthlyIncome * 0.25;
-  const targetHigh = monthlyIncome * 0.32;
+  const targetHigh = monthlyIncome * (homeType === "House" ? 0.28 : 0.32);
   let low = Math.max(cityBaseline[0], targetLow);
   let high = Math.min(cityBaseline[1], targetHigh);
 
   if (roommates === "Yes") high *= 1.1;
+  if (roommates === "No") high *= 0.96;
 
   if (low > high) {
     low = cityBaseline[0] * 0.9;
@@ -198,6 +398,22 @@ function calculateRentRange(salary, cityBaseline, roommates) {
   }
 
   return [Math.round(low / 50) * 50, Math.round(high / 50) * 50];
+}
+
+function daysUntil(dateString) {
+  if (!dateString) return null;
+  const moveDate = new Date(dateString);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((moveDate - today) / (1000 * 60 * 60 * 24));
+}
+
+function moveTimingLabel(dateString) {
+  const days = daysUntil(dateString);
+  if (days === null) return "Flexible timing";
+  if (days <= 14) return "Urgent move";
+  if (days <= 45) return "Near-term move";
+  return "Flexible timeline";
 }
 
 function haversineMiles(lat1, lon1, lat2, lon2) {
@@ -240,25 +456,131 @@ async function geocodeLocation(query, cityFallback) {
   }
 }
 
+function buildGenericCityInfo(city, state, center) {
+  const rentBaseline = stateRentBaselines[state] || [1300, 2200];
+  return {
+    rentBaseline,
+    center,
+    dataSource: `Generated from ${city}, ${state || "selected state"} geocoding and state housing baseline`,
+    neighborhoods: [
+      { name: `Downtown ${city}`, vibe: "walkability", lat: center.lat, lon: center.lon, pros: "Closest to offices, restaurants, and daily errands", cons: "Usually higher prices and less space" },
+      { name: `Midtown ${city}`, vibe: "nightlife", lat: center.lat + 0.025, lon: center.lon + 0.015, pros: "More social energy and easier weekend plans", cons: "Can be louder and more competitive" },
+      { name: `${city} Northside`, vibe: "quiet", lat: center.lat + 0.055, lon: center.lon - 0.025, pros: "Calmer residential feel with more space", cons: "Commute may be longer" },
+      { name: `${city} Value Area`, vibe: "affordability", lat: center.lat - 0.055, lon: center.lon + 0.035, pros: "Better chance of staying under budget", cons: "May require more commute flexibility" }
+    ]
+  };
+}
+
+function getKnownCityInfo(city, state) {
+  const knownStateByCity = {
+    Seattle: "Washington",
+    Bellevue: "Washington",
+    Redmond: "Washington",
+    Tacoma: "Washington",
+    Spokane: "Washington",
+    Everett: "Washington",
+    Olympia: "Washington",
+    "Vancouver (WA)": "Washington",
+    Austin: "Texas",
+    "New York": "New York",
+    Chicago: "Illinois",
+    "San Francisco": "California",
+    "Los Angeles": "California"
+  };
+  if (!cityData[city]) return null;
+  if (knownStateByCity[city] && state && knownStateByCity[city] !== state) return null;
+  return cityData[city];
+}
+
 function scoreNeighborhood(n, preferences, commuteGap) {
   let score = 0;
-  if (n.vibe === preferences.lifestyle.toLowerCase()) score += 3;
+  const lifestyle = String(preferences.lifestyle || "").toLowerCase();
+  if (n.vibe === lifestyle) score += 3;
   if (preferences.homeType === "House" && n.vibe === "quiet") score += 2;
   if (preferences.homeType === "Apartment" && (n.vibe === "walkability" || n.vibe === "nightlife")) score += 1;
   if (preferences.car === "No" && (n.vibe === "walkability" || n.name === "Northgate" || n.name === "Long Island City")) score += 2;
-  if (commuteGap <= 10) score += 2;
-  if (commuteGap <= 20) score += 1;
+  if (preferences.workMode === "Remote") score += n.vibe === lifestyle ? 2 : 0;
+  if (preferences.workMode !== "Remote" && commuteGap <= 10) score += 2;
+  if (preferences.workMode !== "Remote" && commuteGap <= 20) score += 1;
+  if (preferences.roommates === "Yes" && (n.vibe === "nightlife" || n.vibe === "walkability")) score += 1;
+  if (preferences.roommates === "No" && n.vibe === "quiet") score += 1;
+  if (preferences.alone === "Yes" && (n.vibe === "walkability" || n.vibe === "quiet")) score += 1;
+  if (preferences.housePaymentType === "Cash" && n.vibe === "affordability") score += 1;
   if (preferences.pets === "Yes" && (n.name === "Northgate" || n.name === "Mueller" || n.name === "Lincoln Square" || n.name === "Sunset" || n.name === "Pasadena")) score += 1;
+  if (daysUntil(preferences.moveDate) !== null && daysUntil(preferences.moveDate) <= 30 && (n.vibe === "affordability" || n.vibe === "walkability")) score += 1;
   return score;
 }
 
-function buildListingLinks(city, neighborhood, homeType) {
+function fitNotes(n, answers, commuteGap) {
+  const notes = [];
+  notes.push(`${answers.lifestyle || "Lifestyle"} preference matched to a ${n.vibe} neighborhood profile.`);
+  notes.push(answers.workMode === "Remote"
+    ? "Remote work makes lifestyle fit more important than commute distance."
+    : `Commute target considered with a ${commuteGap}-minute estimated gap.`);
+  notes.push(answers.car === "No"
+    ? "No-car preference favors walkability and transit access."
+    : "Car access gives more flexibility across neighborhoods.");
+  notes.push(answers.homeType === "House"
+    ? `${answers.housePaymentType || "House"} payment preference is used for housing guidance and listing type.`
+    : `${answers.roommates} roommate preference is used in the affordability range.`);
+  if (answers.pets === "Yes") notes.push("Pet needs favor calmer, more residential options when possible.");
+  if (answers.alone === "Yes") notes.push("Moving alone favors areas with easier daily convenience and calmer fit.");
+  notes.push(`${moveTimingLabel(answers.moveDate)} factored into the recommendation urgency.`);
+  return notes;
+}
+
+function profileSummary(answers) {
+  const housingLine = answers.homeType === "House"
+    ? `${answers.homeType} (${answers.housePaymentType || "payment undecided"})`
+    : `${answers.homeType} with roommates: ${answers.roommates}`;
+  return [
+    `Location: ${answers.city || "Unknown"}, ${answers.state || "Unknown"}`,
+    `Work: ${answers.workMode || "Unknown"} at ${answers.companyName || answers.workAddress || "provided workplace"}`,
+    `Housing: ${housingLine}`,
+    `Lifestyle: ${answers.lifestyle || "Unknown"}, commute target: ${answers.commute || "N/A"} minutes`,
+    `Car: ${answers.car || "Unknown"}, pets: ${answers.pets || "Unknown"}, moving alone: ${answers.alone || "Unknown"}`,
+    `Move timing: ${moveTimingLabel(answers.moveDate)}`,
+    `Saved account: ${answers.createAccount === "Yes" ? answers.accountEmail || "Yes" : "No"}`
+  ];
+}
+
+function buildListingLinks(city, neighborhood, homeType, stateName) {
   const typeWord = homeType === "House" ? "house" : "apartment";
-  const query = encodeURIComponent(`${neighborhood} ${city} ${typeWord} for rent`);
+  const stateAbbrev = {
+    Alabama: "al", Alaska: "ak", Arizona: "az", Arkansas: "ar", California: "ca", Colorado: "co", Connecticut: "ct",
+    Delaware: "de", Florida: "fl", Georgia: "ga", Hawaii: "hi", Idaho: "id", Illinois: "il", Indiana: "in",
+    Iowa: "ia", Kansas: "ks", Kentucky: "ky", Louisiana: "la", Maine: "me", Maryland: "md", Massachusetts: "ma",
+    Michigan: "mi", Minnesota: "mn", Mississippi: "ms", Missouri: "mo", Montana: "mt", Nebraska: "ne", Nevada: "nv",
+    "New Hampshire": "nh", "New Jersey": "nj", "New Mexico": "nm", "New York": "ny", "North Carolina": "nc",
+    "North Dakota": "nd", Ohio: "oh", Oklahoma: "ok", Oregon: "or", Pennsylvania: "pa", "Rhode Island": "ri",
+    "South Carolina": "sc", "South Dakota": "sd", Tennessee: "tn", Texas: "tx", Utah: "ut", Vermont: "vt",
+    Virginia: "va", Washington: "wa", "West Virginia": "wv", Wisconsin: "wi", Wyoming: "wy"
+  };
+
+  const slugify = (value) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+  const citySlug = slugify(city);
+  const neighborhoodSlug = slugify(neighborhood);
+  const region = stateAbbrev[stateName] || "wa";
+  const query = encodeURIComponent(`${neighborhood}, ${city}, ${stateName || ""} ${typeWord}`);
+
+  if (homeType === "House") {
+    return {
+      primary: `https://www.zillow.com/${neighborhoodSlug}-${citySlug}-${region}/`,
+      secondary: `https://www.redfin.com/city/search/${query}`,
+      tertiary: `https://www.realtor.com/realestateandhomes-search/${citySlug}_${region}/type-single-family-home`
+    };
+  }
+
   return {
-    zillow: `https://www.zillow.com/homes/for_rent/${query}_rb/`,
-    apartments: `https://www.apartments.com/search/?q=${query}`,
-    rent: `https://www.rent.com/search?q=${query}`
+    primary: `https://www.zillow.com/${neighborhoodSlug}-${citySlug}-${region}/rentals/`,
+    secondary: `https://www.apartments.com/${neighborhoodSlug}-${citySlug}-${region}/`,
+    tertiary: `https://www.rent.com/search?q=${query}%20for%20rent`
   };
 }
 
@@ -273,18 +595,25 @@ async function renderResults() {
   }
 
   const answers = JSON.parse(raw);
-  const city = cityData[answers.city] ? answers.city : "Seattle";
+  const city = answers.city || "Seattle";
   const salary = toNum(answers.salary);
-  const maxRent = toNum(answers.maxRent);
+  const maxHomePrice = toNum(answers.maxHomePrice);
+  const monthlyHousingCap = answers.homeType === "House"
+    ? toNum(answers.maxHousing) || (maxHomePrice ? maxHomePrice * 0.0058 : 0)
+    : toNum(answers.maxRent);
   const commuteTarget = toNum(answers.commute);
-  const cityInfo = cityData[city];
-  const officeQuery = `${answers.workAddress || ""} ${answers.companyName || ""} ${city}`.trim();
+  const knownCityInfo = getKnownCityInfo(city, answers.state);
+  const fallbackCenter = knownCityInfo
+    ? knownCityInfo.center
+    : await geocodeLocation(`${city} ${answers.state || ""}`, { ...cityData.Seattle.center, source: "fallback" });
+  const cityInfo = knownCityInfo || buildGenericCityInfo(city, answers.state, fallbackCenter);
+  const officeQuery = `${answers.workAddress || ""} ${answers.companyName || ""} ${city} ${answers.state || ""}`.trim();
 
   root.innerHTML = `<section class="panel"><h1>Building your recommendations...</h1><p>We are calculating commute distance from your work location and ranking neighborhoods.</p></section>`;
 
   const office = await geocodeLocation(officeQuery, { ...cityInfo.center, source: "fallback" });
 
-  const [suggestedLow, suggestedHigh] = calculateRentRange(salary, cityInfo.rentBaseline, answers.roommates);
+  const [suggestedLow, suggestedHigh] = calculateRentRange(salary, cityInfo.rentBaseline, answers.roommates, answers.homeType);
   const adjustedHigh = answers.homeType === "House" ? Math.round((suggestedHigh * 1.1) / 50) * 50 : suggestedHigh;
 
   const ranked = cityInfo.neighborhoods
@@ -295,20 +624,20 @@ async function renderResults() {
       const commuteMidpoint = toNum(commuteEstimate.split("-")[0]);
       const commuteGap = Math.abs(commuteMidpoint - commuteTarget);
       const score = scoreNeighborhood(n, answers, commuteGap);
-      return { ...n, distance: distanceRounded, commuteEstimate, score };
+      return { ...n, distance: distanceRounded, commuteEstimate, commuteGap, score };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
-  const warning = maxRent < suggestedLow
-    ? `Your max rent (${dollar(maxRent)}) is below the recommended range for ${city}. Consider roommates or longer commute.`
-    : maxRent > adjustedHigh
-      ? `You can afford your stated max rent, but staying near ${dollar(adjustedHigh)} protects savings and flexibility.`
-      : `Your max rent is aligned with your affordability target.`;
+  const warning = monthlyHousingCap < suggestedLow
+    ? `Your monthly housing target (${dollar(monthlyHousingCap)}) is below the recommended range for ${city}. Consider more flexibility.`
+    : monthlyHousingCap > adjustedHigh
+      ? `You can afford your stated housing budget, but staying near ${dollar(adjustedHigh)} protects savings and flexibility.`
+      : `Your housing budget is aligned with your affordability target.`;
 
   const monthlyGross = salary / 12;
   const budget = {
-    rent: Math.min(maxRent || adjustedHigh, adjustedHigh),
+    housing: Math.min(monthlyHousingCap || adjustedHigh, adjustedHigh),
     utilities: monthlyGross * 0.06,
     transport: monthlyGross * 0.08,
     groceries: monthlyGross * 0.12,
@@ -317,31 +646,40 @@ async function renderResults() {
   };
 
   const homeTypeLabel = answers.homeType === "House" ? "houses" : "apartments";
+  const paymentContext = answers.homeType === "House"
+    ? answers.housePaymentType === "Cash"
+      ? `cash purchase budget of ${dollar(maxHomePrice)}`
+      : `monthly mortgage target of ${dollar(toNum(answers.maxHousing))}`
+    : `max rent of ${dollar(toNum(answers.maxRent))}`;
   const geocodeNote = office.source === "geocoded"
     ? `Commute distance is calculated from your provided work location${answers.companyName ? ` (${answers.companyName})` : ""}.`
     : "We could not match the exact work location, so commute distance uses the city center as a fallback.";
+  const cityDataNote = cityInfo.dataSource || `Using custom neighborhood and rent data for ${city}.`;
 
   const downPaymentAmount = toNum(answers.downPaymentAmount);
   const isHouseWithDownPaymentPlan =
     answers.homeType === "House" && answers.wantsDownPayment === "Yes" && downPaymentAmount > 0;
 
   let housePurchaseHtml = "";
-  if (isHouseWithDownPaymentPlan) {
-    const targetMonthlyMortgageBudget = monthlyGross * 0.28;
+  if (isHouseWithDownPaymentPlan || answers.housePaymentType === "Cash") {
+    const targetMonthlyMortgageBudget = toNum(answers.maxHousing) || monthlyGross * 0.28;
     const estimatedHomePrice = estimateHomePriceFromMonthlyBudget(targetMonthlyMortgageBudget);
     const downPercent = Math.min(100, (downPaymentAmount / estimatedHomePrice) * 100);
     const estimatedLoan = Math.max(0, estimatedHomePrice - downPaymentAmount);
-    const pmiNote = downPercent < 20
+    const pmiNote = answers.housePaymentType === "Cash"
+      ? `Cash purchase budget entered: ${dollar(maxHomePrice)}. Listing links prioritize for-sale houses.`
+      : downPercent < 20
       ? "Down payment is below 20%, so PMI may apply."
       : "Down payment is at or above 20%, which can help avoid PMI.";
 
     housePurchaseHtml = `
       <section class="panel">
-        <h2>House down payment planning</h2>
+        <h2>House purchase planning</h2>
+        <p><strong>Payment type:</strong> ${answers.housePaymentType || "Mortgage"}</p>
         <p><strong>Planned down payment:</strong> ${dollar(downPaymentAmount)}</p>
-        <p><strong>Estimated affordable home price:</strong> ${dollar(estimatedHomePrice)}</p>
-        <p><strong>Estimated down payment ratio:</strong> ${downPercent.toFixed(1)}%</p>
-        <p><strong>Estimated loan amount:</strong> ${dollar(estimatedLoan)}</p>
+        <p><strong>Estimated affordable home price:</strong> ${answers.housePaymentType === "Cash" ? dollar(maxHomePrice) : dollar(estimatedHomePrice)}</p>
+        <p><strong>Estimated down payment ratio:</strong> ${answers.housePaymentType === "Cash" ? "100.0" : downPercent.toFixed(1)}%</p>
+        <p><strong>Estimated loan amount:</strong> ${answers.housePaymentType === "Cash" ? dollar(0) : dollar(estimatedLoan)}</p>
         <p>${pmiNote}</p>
       </section>
     `;
@@ -350,16 +688,24 @@ async function renderResults() {
   root.innerHTML = `
     <section class="panel">
       <h1>Your relocation plan for ${city}</h1>
-      <p class="muted">You make ${dollar(salary)} per year and prefer ${homeTypeLabel}. Recommended rent range: <strong>${dollar(suggestedLow)}-${dollar(adjustedHigh)}</strong>.</p>
+      <p class="muted">You make ${dollar(salary)} per year, prefer ${homeTypeLabel}, and gave a ${paymentContext}. Recommended monthly housing range: <strong>${dollar(suggestedLow)}-${dollar(adjustedHigh)}</strong>.</p>
       <p>${warning}</p>
+      <p><strong>City data note:</strong> ${cityDataNote}</p>
       <p><strong>Distance note:</strong> ${geocodeNote}</p>
-      <p><strong>AI insight:</strong> ${ranked[0].name} is your top match for ${answers.homeType.toLowerCase()} living based on your lifestyle and commute target.</p>
+      <p><strong>AI insight:</strong> ${ranked[0].name} is your top match because it balances your lifestyle, commute target, transportation, housing type, pet needs, roommate preference, and moving timeline.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Answers used in this recommendation</h2>
+      <ul class="pretty-list">
+        ${profileSummary(answers).map((item) => `<li>${item}</li>`).join("")}
+      </ul>
     </section>
 
     <section class="results-grid">
       ${ranked
         .map((n, i) => {
-          const links = buildListingLinks(city, n.name, answers.homeType);
+          const links = buildListingLinks(city, n.name, answers.homeType, answers.state);
           return `
             <article class="result-card">
               <h3>${i + 1}. ${n.name}</h3>
@@ -369,9 +715,15 @@ async function renderResults() {
               <p><strong>Best for:</strong> ${n.vibe}</p>
               <p><strong>Pros:</strong> ${n.pros}</p>
               <p><strong>Downside:</strong> ${n.cons}</p>
-              <p><a href="${links.zillow}" target="_blank" rel="noreferrer">Search ${answers.homeType.toLowerCase()}s on Zillow</a></p>
-              <p><a href="${links.apartments}" target="_blank" rel="noreferrer">Search on Apartments.com</a></p>
-              <p><a href="${links.rent}" target="_blank" rel="noreferrer">Search on Rent.com</a></p>
+              <ul class="pretty-list">
+                ${fitNotes(n, answers, n.commuteGap).map((note) => `<li>${note}</li>`).join("")}
+              </ul>
+              <p><a href="${links.primary}" target="_blank" rel="noreferrer">${answers.homeType === "House" ? "View houses on Zillow/for-sale" : "View apartments on Zillow"}</a></p>
+              <p class="muted">${links.primary}</p>
+              <p><a href="${links.secondary}" target="_blank" rel="noreferrer">${answers.homeType === "House" ? "View houses on Redfin" : "View on Apartments.com"}</a></p>
+              <p class="muted">${links.secondary}</p>
+              <p><a href="${links.tertiary}" target="_blank" rel="noreferrer">${answers.homeType === "House" ? "View houses on Realtor.com" : "View on Rent.com"}</a></p>
+              <p class="muted">${links.tertiary}</p>
             </article>
           `;
         })
@@ -380,7 +732,7 @@ async function renderResults() {
 
     <section class="panel">
       <h2>Monthly budget breakdown</h2>
-      <p>Rent: ${dollar(budget.rent)}</p>
+      <p>${answers.homeType === "House" ? "Housing (mortgage/cash plan):" : "Rent:"} ${dollar(budget.housing)}</p>
       <p>Utilities: ${dollar(budget.utilities)}</p>
       <p>Transport: ${dollar(budget.transport)}</p>
       <p>Groceries: ${dollar(budget.groceries)}</p>
@@ -394,4 +746,71 @@ async function renderResults() {
   `;
 }
 
+async function renderResources() {
+  const root = document.getElementById("resources-root");
+  if (!root) return;
+
+  const raw = localStorage.getItem("moveMatchAnswers");
+  if (!raw) {
+    root.innerHTML = `
+      <h2>Your personalized housing links</h2>
+      <p class="muted">Complete the questionnaire first, then come back here for specific neighborhood links.</p>
+      <a class="btn" href="questionnaire.html">Start Questionnaire</a>
+    `;
+    return;
+  }
+
+  const answers = JSON.parse(raw);
+  const city = answers.city || "Seattle";
+  const knownCityInfo = getKnownCityInfo(city, answers.state);
+  const fallbackCenter = knownCityInfo
+    ? knownCityInfo.center
+    : await geocodeLocation(`${city} ${answers.state || ""}`, { ...cityData.Seattle.center, source: "fallback" });
+  const cityInfo = knownCityInfo || buildGenericCityInfo(city, answers.state, fallbackCenter);
+  const commuteTarget = toNum(answers.commute) || 30;
+  const officeQuery = `${answers.workAddress || ""} ${answers.companyName || ""} ${city} ${answers.state || ""}`.trim();
+  const office = await geocodeLocation(officeQuery, { ...cityInfo.center, source: "fallback" });
+
+  const ranked = cityInfo.neighborhoods
+    .map((n) => {
+      const distance = haversineMiles(office.lat, office.lon, n.lat, n.lon);
+      const distanceRounded = Math.round(distance * 10) / 10;
+      const commuteEstimate = estimateCommuteMinutes(distanceRounded, answers.workMode || "In-person", answers.car || "No");
+      const commuteMidpoint = toNum(commuteEstimate.split("-")[0]);
+      const commuteGap = Math.abs(commuteMidpoint - commuteTarget);
+      const score = scoreNeighborhood(n, answers, commuteGap);
+      return { ...n, distance: distanceRounded, commuteEstimate, score };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const homeType = answers.homeType || "Apartment";
+  const homeTypePlural = homeType === "House" ? "houses" : "apartments";
+
+  root.innerHTML = `
+    <h2>Personalized ${homeType.toLowerCase()} recommendations</h2>
+    <p class="muted">Built from your profile for ${city}. Click any link to see live listings.</p>
+    <div class="results-grid">
+      ${ranked.map((n, i) => {
+        const links = buildListingLinks(city, n.name, homeType, answers.state);
+        return `
+          <article class="result-card">
+            <h3>${i + 1}. ${n.name}</h3>
+            <p><strong>Recommended type:</strong> ${homeType}</p>
+            <p><strong>Distance to work:</strong> ${n.distance} miles</p>
+            <p><strong>Estimated commute:</strong> ${n.commuteEstimate}</p>
+            <p><a href="${links.primary}" target="_blank" rel="noreferrer">${homeType === "House" ? "View houses on Zillow" : `View ${homeTypePlural} on Zillow`}</a></p>
+            <p class="muted">${links.primary}</p>
+            <p><a href="${links.secondary}" target="_blank" rel="noreferrer">${homeType === "House" ? "View houses on Redfin" : "View on Apartments.com"}</a></p>
+            <p class="muted">${links.secondary}</p>
+            <p><a href="${links.tertiary}" target="_blank" rel="noreferrer">${homeType === "House" ? "View houses on Realtor.com" : "View on Rent.com"}</a></p>
+            <p class="muted">${links.tertiary}</p>
+          </article>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
 renderResults();
+renderResources();
